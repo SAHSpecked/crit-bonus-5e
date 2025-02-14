@@ -1,0 +1,38 @@
+{
+  "id": "crit-bonus-5e",
+  "title": "Crit Bonus 5e",
+  "description": "Denotes rolled natural ones and twenties and adds a bonus to certain natural twenties in 5e.",
+  "authors": [
+    {
+      "name": "SAHSpecked"
+    }
+  ],
+  "version": "0.0.1",
+  "compatibility": {
+    "minimum": "12",
+    "verified": "13"
+  },
+  "esmodules": ["scripts/module.js"],
+  "url": "https://github.com/SAHSpecked/crit-bonus-5e",
+  "manifest": "https://github.com/SAHSpecked/crit-bonus-5e/releases/latest/download/module.json",
+  "download": "https://github.com/SAHSpecked/crit-bonus-5e/releases/latest/download/module.zip",
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system",
+        "manifest": "https://github.com/foundryvtt/dnd5e/releases/download/latest/system.json",
+        "compatibility": {
+          "minimum": "3.1.0",
+          "verified": "4.5.0"
+        }
+      }
+    ],
+    "requires": [
+      {
+        "id": "lib-wrapper",
+        "type": "module"
+      }
+    ]
+  }
+}
