@@ -1,13 +1,13 @@
 {
   "id": "crit-bonus-5e",
   "title": "Crit Bonus 5e",
-  "description": "Denotes rolled natural ones and twenties and adds a bonus to certain natural twenties in 5e.",
+  "description": "Denotes player-rolled natural ones and twenties, and optionally adds a bonus to natural twenties, in 5e.",
   "authors": [
     {
       "name": "SAHSpecked"
     }
   ],
-  "version": "0.0.2",
+  "version": "0.0.3",
   "compatibility": {
     "minimum": "12",
     "verified": "13"

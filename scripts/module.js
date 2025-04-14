@@ -6,7 +6,7 @@ Hooks.on("init", () => {
 
   game.settings.register(MODULE_ID, "enableCritBonus", {
     name: "Enable Crit Bonus",
-    hint: "Add a bonus to the total of any natural twenty ability test, skill, tool check, ability save, or concentration.",
+    hint: "Add a bonus to the total of all player natural twenty ability tests, skills, tool checks, ability saves, or concentrations.",
     scope: "world", // "world" = sync to db, "client" = local storage
     config: true,
     type: Boolean,
@@ -19,7 +19,7 @@ Hooks.on("init", () => {
 
   game.settings.register(MODULE_ID, "critBonusValue", {
     name: "Crit Bonus Value",
-    hint: "The bonus value to add to the total on a natural twenty ability test, skill, tool check, ability save, or concentration.",
+    hint: "The bonus value to add to the total on all player natural twenty ability tests, skills, tool checks, ability saves, or concentrations.",
     scope: "world", // "world" = sync to db, "client" = local storage
     config: true,
     type: Number,
@@ -32,7 +32,7 @@ Hooks.on("init", () => {
 
   game.settings.register(MODULE_ID, "naturalTwentyMessage", {
     name: "Natural Twenty Message",
-    hint: "The message, preceding the Critical Total, on a natural twenty.",
+    hint: "The message, preceding the Critical Total, on all player natural twentys.",
     scope: "world", // "world" = sync to db, "client" = local storage
     config: true,
     type: String,
@@ -47,7 +47,7 @@ Hooks.on("init", () => {
 
   game.settings.register(MODULE_ID, "naturalOneMessage", {
     name: "Natural One Message",
-    hint: "The message on a natural one.",
+    hint: "The message on all player natural ones.",
     scope: "world", // "world" = sync to db, "client" = local storage
     config: true,
     type: String,
@@ -61,82 +61,92 @@ Hooks.on("init", () => {
   });
 });
 
+// v3.1.0
 async function checkRollForNaturals(roll) {
-  if (game.system.version >= "3.1.0" && game.system.version < "4.1.0") {
-    if (game.settings.get(MODULE_ID, "enableCritBonus")) {
-      // Get active die number
-      let rollValue = null;
-      for (const rv of roll.dice[0].results) {
-        if (rv.active == true) {
-          rollValue = rv.result;
-          break;
-        }
-      }
-
-      // Do things on natural 20 and 1
-      if (rollValue == 20) {
-        const rollModified = roll._total + game.settings.get(MODULE_ID, "critBonusValue");
-        await ChatMessage.create({
-          speaker: { alias: "Critical Confirmation" },
-          content: `${game.settings.get(MODULE_ID, "naturalTwentyMessage")}<br><br>Critical Total: <b>${rollModified}</b>`,
-        });
-      } else if (rollValue == 1) {
-        await ChatMessage.create({
-          speaker: { alias: "Critical Confirmation" },
-          content: `${game.settings.get(MODULE_ID, "naturalOneMessage")}`,
-        });
-      }
+  // Get active die number
+  let rollValue = null;
+  for (const rv of roll.dice[0].results) {
+    if (rv.active == true) {
+      rollValue = rv.result;
+      break;
     }
+  }
+
+  // Do things on natural 20 and 1
+  if (rollValue == 20) {
+    const rollModified = roll._total + game.settings.get(MODULE_ID, "critBonusValue");
+    await ChatMessage.create({
+      speaker: { alias: "Critical Confirmation" },
+      content: `${game.settings.get(MODULE_ID, "naturalTwentyMessage")}<br><br>Critical Total: <b>${rollModified}</b>`,
+    });
+  } else if (rollValue == 1) {
+    await ChatMessage.create({
+      speaker: { alias: "Critical Confirmation" },
+      content: `${game.settings.get(MODULE_ID, "naturalOneMessage")}`,
+    });
   }
 }
 
-async function checkRollForNaturalsV2(rolls) {
-  if (game.system.version >= "4.1.0") {
-    if (game.settings.get(MODULE_ID, "enableCritBonus")) {
-      // Get active die number
-      let rollValue = null;
-      for (const rv of rolls[0].d20.results) {
-        if (rv.active == true) {
-          rollValue = rv.result;
-          break;
-        }
-      }
-
-      // Do things on natural 20 and 1
-      if (rollValue == 20) {
-        const rollModified = rolls[0].total + game.settings.get(MODULE_ID, "critBonusValue");
-        await ChatMessage.create({
-          speaker: { alias: "Critical Confirmation" },
-          content: `${game.settings.get(MODULE_ID, "naturalTwentyMessage")}<br><br>Critical Total: <b>${rollModified}</b>`,
-        });
-      } else if (rollValue == 1) {
-        await ChatMessage.create({
-          speaker: { alias: "Critical Confirmation" },
-          content: `${game.settings.get(MODULE_ID, "naturalOneMessage")}`,
-        });
-      }
+// v4.1.0
+async function checkRollsForNaturals(rolls) {
+  // Get active die number
+  let rollValue = null;
+  for (const rv of rolls[0].d20.results) {
+    if (rv.active == true) {
+      rollValue = rv.result;
+      break;
     }
+  }
+
+  // Do things on natural 20 and 1
+  if (rollValue == 20) {
+    const rollModified = rolls[0].total + game.settings.get(MODULE_ID, "critBonusValue");
+    await ChatMessage.create({
+      speaker: { alias: "Critical Confirmation" },
+      content: `${game.settings.get(MODULE_ID, "naturalTwentyMessage")}<br><br>Critical Total: <b>${rollModified}</b>`,
+    });
+  } else if (rollValue == 1) {
+    await ChatMessage.create({
+      speaker: { alias: "Critical Confirmation" },
+      content: `${game.settings.get(MODULE_ID, "naturalOneMessage")}`,
+    });
   }
 }
 
 // v3.1.0
 // Modify ability test
 Hooks.on("dnd5e.rollAbilityTest", async (actor, roll, abilityId) => {
+  if (!game.settings.get(MODULE_ID, "enableCritBonus")) return;
+  if (!(game.system.version >= "3.1.0" && game.system.version < "4.1.0")) return;
+  if (!actor.hasPlayerOwner) return;
+
   await checkRollForNaturals(roll);
 });
 
 // Modify skill
 Hooks.on("dnd5e.rollSkill", async (actor, roll, skillId) => {
+  if (!game.settings.get(MODULE_ID, "enableCritBonus")) return;
+  if (!(game.system.version >= "3.1.0" && game.system.version < "4.1.0")) return;
+  if (!actor.hasPlayerOwner) return;
+
   await checkRollForNaturals(roll);
 });
 
 // Modify tool check
 Hooks.on("dnd5e.rollToolCheck", async (actor, roll, toolId) => {
+  if (!game.settings.get(MODULE_ID, "enableCritBonus")) return;
+  if (!(game.system.version >= "3.1.0" && game.system.version < "4.1.0")) return;
+  if (!actor.hasPlayerOwner) return;
+
   await checkRollForNaturals(roll);
 });
 
 // Modify ability save
 Hooks.on("dnd5e.rollAbilitySave", async (actor, roll, abilityId) => {
+  if (!game.settings.get(MODULE_ID, "enableCritBonus")) return;
+  if (!(game.system.version >= "3.1.0" && game.system.version < "4.1.0")) return;
+  if (!actor.hasPlayerOwner) return;
+
   await checkRollForNaturals(roll);
 });
 
@@ -145,22 +155,38 @@ Hooks.on("dnd5e.rollAbilitySave", async (actor, roll, abilityId) => {
 // v4.1.0
 // Modify ability check
 Hooks.on("dnd5e.rollAbilityCheck", async (rolls, data, ability, subject) => {
-  await checkRollForNaturalsV2(rolls);
+  if (!game.settings.get(MODULE_ID, "enableCritBonus")) return;
+  if (!(game.system.version >= "4.1.0")) return;
+  if (!data.subject.hasPlayerOwner) return;
+
+  await checkRollsForNaturals(rolls);
 });
 
 // Modify saving throw
 Hooks.on("dnd5e.rollSavingThrow", async (rolls, data, ability, subject) => {
-  await checkRollForNaturalsV2(rolls);
+  if (!game.settings.get(MODULE_ID, "enableCritBonus")) return;
+  if (!(game.system.version >= "4.1.0")) return;
+  if (!data.subject.hasPlayerOwner) return;
+
+  await checkRollsForNaturals(rolls);
 });
 
 // Modify skill
 Hooks.on("dnd5e.rollSkillV2", async (rolls, data, skill, tool, subject) => {
-  await checkRollForNaturalsV2(rolls);
+  if (!game.settings.get(MODULE_ID, "enableCritBonus")) return;
+  if (!(game.system.version >= "4.1.0")) return;
+  if (!data.subject.hasPlayerOwner) return;
+
+  await checkRollsForNaturals(rolls);
 });
 
 // Modify tool check
 Hooks.on("dnd5e.rollToolCheckV2", async (rolls, data, skill, tool, subject) => {
-  await checkRollForNaturalsV2(rolls);
+  if (!game.settings.get(MODULE_ID, "enableCritBonus")) return;
+  if (!(game.system.version >= "4.1.0")) return;
+  if (!data.subject.hasPlayerOwner) return;
+
+  await checkRollsForNaturals(rolls);
 });
 
 // ! CONCENTRATION NOT NEEDED BECAUSE IT IS A SAVE ALREADY !
